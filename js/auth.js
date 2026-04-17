@@ -117,3 +117,5 @@ function showError(msg) {
   banner.textContent = msg;
   banner.classList.remove("hidden");
 }
+
+document.addEventListener("DOMContentLoaded", init);
