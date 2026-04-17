@@ -445,10 +445,74 @@ input[type="text"]:focus, select:focus {
   gap: 8px;
 }
 
+/* Stat cards — 6 columns */
+.stat-cards { grid-template-columns: repeat(6, 1fr); }
+.stat-icon.red { background: #d13438; }
+
+/* Tabs */
+.tabs-section {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: #faf9f8;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab-btn:hover { color: var(--text); }
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: var(--card-bg);
+}
+
+.tab-content { padding: 20px; }
+
+.tab-panel .search-results {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.results-count {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
 /* Responsive */
 @media (max-width: 1100px) {
   .charts-row { grid-template-columns: 1fr 1fr; }
   .charts-row .chart-card:last-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 1200px) {
+  .stat-cards { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 768px) {

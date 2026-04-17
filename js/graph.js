@@ -42,9 +42,9 @@ function chunkArray(arr, size) {
   return chunks;
 }
 
-export async function fetchAssignedApps(token) {
+export async function fetchAllApps(token) {
   return graphGetAll(
-    `${GRAPH_BASE}/deviceAppManagement/mobileApps?$filter=isAssigned eq true`,
+    `${GRAPH_BASE}/deviceAppManagement/mobileApps`,
     token
   );
 }

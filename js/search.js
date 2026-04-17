@@ -1,24 +1,54 @@
-let _data = [];
+let _apps = [];
+let _allGroups = [];
+let _activeTab = "app-search";
 
-export function initSearch(data) {
-  _data = data;
-  populateGroupDropdown(data);
+export function initSearch(apps, allGroups) {
+  _apps = apps;
+  _allGroups = allGroups;
 
-  const appInput = document.getElementById("app-search-input");
-  const groupSelect = document.getElementById("group-search-select");
-
-  appInput.addEventListener("input", (e) => handleAppSearch(e.target.value.trim()));
-  groupSelect.addEventListener("change", (e) => handleGroupSearch(e.target.value));
+  setupTabs();
+  setupAppSearch();
+  setupGroupSearch();
+  renderUnassignedApps();
+  renderEmptyGroups();
 }
 
-function handleAppSearch(query) {
+// ── Tabs ──────────────────────────────────────────────────
+
+function setupTabs() {
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      switchTab(tab);
+    });
+  });
+}
+
+function switchTab(tab) {
+  _activeTab = tab;
+  document.querySelectorAll(".tab-btn").forEach((b) =>
+    b.classList.toggle("active", b.dataset.tab === tab)
+  );
+  document.querySelectorAll(".tab-panel").forEach((p) =>
+    p.classList.toggle("hidden", p.id !== `tab-${tab}`)
+  );
+}
+
+// ── App Search ────────────────────────────────────────────
+
+function setupAppSearch() {
+  const input = document.getElementById("app-search-input");
+  input.addEventListener("input", (e) => renderAppResults(e.target.value.trim()));
+}
+
+function renderAppResults(query) {
   const container = document.getElementById("app-search-results");
   if (!query) {
     container.innerHTML = `<p class="search-placeholder">Type an app name to search.</p>`;
     return;
   }
   const q = query.toLowerCase();
-  const matches = _data.filter((app) => app.appName.toLowerCase().includes(q));
+  const matches = _apps.filter((a) => a.appName.toLowerCase().includes(q));
   if (!matches.length) {
     container.innerHTML = `<p class="search-placeholder">No apps found matching "${escapeHtml(query)}".</p>`;
     return;
@@ -26,110 +56,163 @@ function handleAppSearch(query) {
   container.innerHTML = matches.map(renderAppCard).join("");
 }
 
-function handleGroupSearch(groupId) {
+// ── Group Search ──────────────────────────────────────────
+
+function setupGroupSearch() {
+  const input = document.getElementById("group-search-input");
+  input.addEventListener("input", (e) => renderGroupResults(e.target.value.trim()));
+}
+
+function renderGroupResults(query) {
   const container = document.getElementById("group-search-results");
-  if (!groupId) {
-    container.innerHTML = `<p class="search-placeholder">Select a group to see its apps.</p>`;
+  if (!query) {
+    container.innerHTML = `<p class="search-placeholder">Type a group name to search.</p>`;
     return;
   }
-  const matches = _data.filter((app) =>
-    app.assignments.some((a) => a.groupId === groupId)
+  const q = query.toLowerCase();
+
+  // Build searchable group list: real groups + virtual built-ins if used
+  const usedBuiltIns = getUsedBuiltIns();
+  const realGroups = _allGroups.filter((g) =>
+    g.displayName?.toLowerCase().includes(q)
   );
-  const groupName = getGroupName(groupId);
-  if (!matches.length) {
-    container.innerHTML = `<p class="search-placeholder">No apps assigned to "${escapeHtml(groupName)}".</p>`;
+  const builtInMatches = usedBuiltIns.filter((g) =>
+    g.groupName.toLowerCase().includes(q)
+  );
+
+  if (!realGroups.length && !builtInMatches.length) {
+    container.innerHTML = `<p class="search-placeholder">No groups found matching "${escapeHtml(query)}".</p>`;
     return;
   }
-  container.innerHTML = matches
-    .map((app) => {
-      const relevantAssignments = app.assignments.filter((a) => a.groupId === groupId);
-      return renderAppCardWithAssignments(app, relevantAssignments);
-    })
-    .join("");
+
+  const cards = [
+    ...builtInMatches.map((g) => renderGroupCard(g.groupId, g.groupName)),
+    ...realGroups.map((g) => renderGroupCard(g.id, g.displayName)),
+  ];
+  container.innerHTML = cards.join("");
 }
 
-function getGroupName(groupId) {
-  if (groupId === "ALL_USERS") return "All Users";
-  if (groupId === "ALL_DEVICES") return "All Devices";
-  for (const app of _data) {
-    const a = app.assignments.find((x) => x.groupId === groupId);
-    if (a) return a.groupName;
-  }
-  return groupId;
-}
-
-function populateGroupDropdown(data) {
-  const select = document.getElementById("group-search-select");
-  const groupMap = new Map();
-
-  for (const app of data) {
+function getUsedBuiltIns() {
+  const used = new Set();
+  for (const app of _apps) {
     for (const a of app.assignments) {
-      if (!groupMap.has(a.groupId)) {
-        groupMap.set(a.groupId, a.groupName);
+      if (a.groupId === "ALL_USERS" || a.groupId === "ALL_DEVICES") {
+        used.add(a.groupId);
       }
     }
   }
-
-  const sorted = [...groupMap.entries()].sort((a, b) => {
-    if (a[0] === "ALL_USERS") return -1;
-    if (b[0] === "ALL_USERS") return 1;
-    if (a[0] === "ALL_DEVICES") return -1;
-    if (b[0] === "ALL_DEVICES") return 1;
-    return a[1].localeCompare(b[1]);
-  });
-
-  select.innerHTML =
-    `<option value="">-- Select a group --</option>` +
-    sorted
-      .map(
-        ([id, name]) =>
-          `<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`
-      )
-      .join("");
+  const result = [];
+  if (used.has("ALL_USERS")) result.push({ groupId: "ALL_USERS", groupName: "All Users" });
+  if (used.has("ALL_DEVICES")) result.push({ groupId: "ALL_DEVICES", groupName: "All Devices" });
+  return result;
 }
 
-function renderAppCard(app) {
-  return renderAppCardWithAssignments(app, app.assignments);
-}
-
-function renderAppCardWithAssignments(app, assignments) {
-  const appLink = renderAppLink(app.appId, app.appName);
-  const assignmentItems = assignments.map((a) => {
-    const badge = renderBadge(a.intent);
-    const groupLink = renderGroupLink(a.groupId, a.groupName);
-    return `<span class="assignment-item">${badge} ${groupLink}</span>`;
+function renderGroupCard(groupId, groupName) {
+  const appsForGroup = _apps.filter((a) =>
+    a.assignments.some((x) => x.groupId === groupId)
+  );
+  if (!appsForGroup.length) {
+    return `
+      <div class="result-card">
+        <div class="result-app-name">${renderGroupLink(groupId, groupName)}</div>
+        <div class="result-app-type" style="color:var(--text-muted)">No app assignments</div>
+      </div>`;
+  }
+  const appItems = appsForGroup.map((app) => {
+    const intent = app.assignments.find((x) => x.groupId === groupId)?.intent ?? "";
+    return `<span class="assignment-item">${renderBadge(intent)} ${renderAppLink(app.appId, app.appName)}</span>`;
   });
-
   return `
     <div class="result-card">
-      <div class="result-app-name">${appLink}</div>
-      <div class="result-app-type">${escapeHtml(app.appType)}</div>
-      <div class="assignment-list">${assignmentItems.join("")}</div>
-    </div>
-  `;
+      <div class="result-app-name">${renderGroupLink(groupId, groupName)}</div>
+      <div class="result-app-type">${appsForGroup.length} app${appsForGroup.length !== 1 ? "s" : ""}</div>
+      <div class="assignment-list">${appItems.join("")}</div>
+    </div>`;
 }
 
+// ── Unassigned Apps ───────────────────────────────────────
+
+function renderUnassignedApps() {
+  const container = document.getElementById("unassigned-results");
+  const unassigned = _apps.filter((a) => !a.isAssigned);
+  if (!unassigned.length) {
+    container.innerHTML = `<p class="search-placeholder">All apps have at least one assignment. 🎉</p>`;
+    return;
+  }
+  container.innerHTML = `
+    <p class="results-count">${unassigned.length} app${unassigned.length !== 1 ? "s" : ""} with no assignments</p>
+    ${unassigned.map(renderUnassignedAppCard).join("")}`;
+}
+
+function renderUnassignedAppCard(app) {
+  const date = app.createdDateTime
+    ? new Date(app.createdDateTime).toLocaleDateString()
+    : "Unknown";
+  return `
+    <div class="result-card">
+      <div class="result-app-name">${renderAppLink(app.appId, app.appName)}</div>
+      <div class="result-app-type">${escapeHtml(app.appType)}${app.publisher ? ` · ${escapeHtml(app.publisher)}` : ""} · Added ${date}</div>
+    </div>`;
+}
+
+// ── Empty Groups ──────────────────────────────────────────
+
+function renderEmptyGroups() {
+  const container = document.getElementById("empty-groups-results");
+  const assignedGroupIds = new Set(
+    _apps.flatMap((a) => a.assignments.map((x) => x.groupId))
+  );
+  const empty = _allGroups.filter((g) => !assignedGroupIds.has(g.id));
+  if (!empty.length) {
+    container.innerHTML = `<p class="search-placeholder">All groups have at least one app assignment. 🎉</p>`;
+    return;
+  }
+
+  const input = document.getElementById("empty-groups-search");
+  const render = (q) => {
+    const filtered = q
+      ? empty.filter((g) => g.displayName?.toLowerCase().includes(q.toLowerCase()))
+      : empty;
+    container.innerHTML = `
+      <p class="results-count">${filtered.length} group${filtered.length !== 1 ? "s" : ""} with no app assignments${q ? ` matching "${escapeHtml(q)}"` : ""}</p>
+      ${filtered.map((g) => `
+        <div class="result-card">
+          <div class="result-app-name">${renderGroupLink(g.id, g.displayName)}</div>
+        </div>`).join("")}`;
+  };
+
+  input?.addEventListener("input", (e) => render(e.target.value.trim()));
+  render("");
+}
+
+// ── Helpers ───────────────────────────────────────────────
+
 export function renderBadge(intent) {
-  const cls =
-    intent === "required"
-      ? "badge-required"
-      : intent === "available"
-      ? "badge-available"
-      : "badge-uninstall";
+  const cls = intent === "required" ? "badge-required" : intent === "available" ? "badge-available" : "badge-uninstall";
   return `<span class="badge ${cls}">${escapeHtml(intent)}</span>`;
 }
 
 export function renderAppLink(appId, appName) {
-  const url = `https://intune.microsoft.com/#view/Microsoft_Intune_Apps/AppMenuBlade/~/Overview/appId/${appId}`;
-  return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(appName)}</a>`;
+  return `<a href="https://intune.microsoft.com/#view/Microsoft_Intune_Apps/AppMenuBlade/~/Overview/appId/${appId}" target="_blank" rel="noopener">${escapeHtml(appName)}</a>`;
 }
 
 export function renderGroupLink(groupId, groupName) {
   if (groupId === "ALL_USERS" || groupId === "ALL_DEVICES") {
     return `<span>${escapeHtml(groupName)}</span>`;
   }
-  const url = `https://intune.microsoft.com/#view/Microsoft_AAD_IAM/GroupDetailsMenuBlade/~/Overview/groupId/${groupId}`;
-  return `<a href="${url}" target="_blank" rel="noopener">${escapeHtml(groupName)}</a>`;
+  return `<a href="https://intune.microsoft.com/#view/Microsoft_AAD_IAM/GroupDetailsMenuBlade/~/Overview/groupId/${groupId}" target="_blank" rel="noopener">${escapeHtml(groupName)}</a>`;
+}
+
+function renderAppCard(app) {
+  const assignmentItems = app.assignments.map((a) =>
+    `<span class="assignment-item">${renderBadge(a.intent)} ${renderGroupLink(a.groupId, a.groupName)}</span>`
+  );
+  return `
+    <div class="result-card">
+      <div class="result-app-name">${renderAppLink(app.appId, app.appName)}</div>
+      <div class="result-app-type">${escapeHtml(app.appType)}</div>
+      <div class="assignment-list">${assignmentItems.length ? assignmentItems.join("") : '<span style="color:var(--text-muted);font-size:12px">No assignments</span>'}</div>
+    </div>`;
 }
 
 export function escapeHtml(str) {

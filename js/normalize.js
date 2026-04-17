@@ -53,6 +53,7 @@ export function normalizeApp(rawApp, rawAssignments, groupNameMap) {
     appType: mapAppType(rawApp["@odata.type"]),
     publisher: rawApp.publisher ?? "",
     createdDateTime: rawApp.createdDateTime ?? "",
+    isAssigned: rawApp.isAssigned ?? assignments.length > 0,
     assignments,
   };
 }
