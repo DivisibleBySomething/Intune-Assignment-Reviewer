@@ -67,9 +67,7 @@ export async function init() {
   logoutBtn.addEventListener("click", async () => {
     sessionStorage.removeItem("intune_dashboard_data");
     await msalInstance.logoutPopup({ account: currentAccount });
-    currentAccount = null;
-    dashView.classList.add("hidden");
-    loginView.classList.remove("hidden");
+    window.location.reload();
   });
 }
 

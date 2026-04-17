@@ -193,7 +193,7 @@ export function renderBadge(intent) {
 }
 
 export function renderAppLink(appId, appName) {
-  return `<a href="https://intune.microsoft.com/#view/Microsoft_Intune_Apps/AppMenuBlade/~/Overview/appId/${appId}" target="_blank" rel="noopener">${escapeHtml(appName)}</a>`;
+  return `<a href="https://intune.microsoft.com/#view/Microsoft_Intune_Apps/SettingsMenu/~/0/appId/${appId}" target="_blank" rel="noopener">${escapeHtml(appName)}</a>`;
 }
 
 export function renderGroupLink(groupId, groupName) {

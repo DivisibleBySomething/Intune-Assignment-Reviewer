@@ -8,6 +8,8 @@ import {
 import { normalizeAll, collectRealGroupIds } from "./normalize.js";
 import { initSearch } from "./search.js";
 import { exportDashboard } from "./export.js";
+import { setData } from "./store.js";
+import { initPages } from "./pages.js";
 
 const CACHE_KEY = "intune_dashboard_data";
 let chartInstances = {};
@@ -117,9 +119,11 @@ export async function loadDashboard(forceRefresh = false) {
 }
 
 function renderDashboard(apps, allGroups) {
+  setData(apps, allGroups);
   renderStatCards(apps, allGroups);
   renderCharts(apps);
   initSearch(apps, allGroups);
+  initPages();
 
   document.getElementById("refresh-btn").onclick = () => loadDashboard(true);
   document.getElementById("export-btn").onclick = () => exportDashboard(apps);
