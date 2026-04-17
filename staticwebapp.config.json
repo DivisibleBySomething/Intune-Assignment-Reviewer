@@ -1,0 +1,29 @@
+{
+  "routes": [
+    {
+      "route": "/js/*",
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "route": "/css/*",
+      "headers": {
+        "Cache-Control": "no-cache"
+      }
+    },
+    {
+      "route": "/*",
+      "serve": "/index.html",
+      "statusCode": 200
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/js/*.js", "/css/*.css"]
+  },
+  "mimeTypes": {
+    ".json": "application/json",
+    ".js": "text/javascript"
+  }
+}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intune Assignment Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <!-- MSAL.js v3 -->
+  <script src="https://alcdn.msauth.net/browser/3.27.0/js/msal-browser.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ── Login View ── -->
+  <div id="login-view">
+    <div class="login-card">
+      <div class="login-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      </div>
+      <h1>Intune Assignment Dashboard</h1>
+      <p>Sign in with your Microsoft 365 account to review Intune mobile app assignments across your tenant.</p>
+      <button id="login-btn" class="btn btn-primary">
+        <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
+          <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
+          <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
+          <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+        </svg>
+        Sign in with Microsoft
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Dashboard View ── -->
+  <div id="dashboard-view" class="hidden">
+
+    <!-- Header -->
+    <header class="dash-header">
+      <h1>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#0078d4"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <span>Intune Assignment Dashboard</span>
+      </h1>
+      <div class="header-right">
+        <div class="user-info" id="user-info"></div>
+        <button id="refresh-btn" class="btn" title="Refresh data from Graph API">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          Refresh
+        </button>
+        <button id="export-btn" class="btn btn-primary" title="Export as standalone HTML">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Export
+        </button>
+        <button id="logout-btn" class="btn btn-ghost" title="Sign out">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div id="progress-container" class="hidden">
+      <div id="progress-bar-wrap">
+        <div id="progress-bar-fill"></div>
+      </div>
+      <div id="progress-label">Loading…</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="dash-content">
+
+      <!-- Stat Cards -->
+      <div class="stat-cards" id="stat-cards">
+        <!-- Rendered by dashboard.js -->
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <h3>Apps by Type</h3>
+          <div class="chart-container">
+            <canvas id="chart-app-types"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Assignments by Intent</h3>
+          <div class="chart-container">
+            <canvas id="chart-intents"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>Top 10 Groups by Assignments</h3>
+          <div class="chart-container">
+            <canvas id="chart-top-groups"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Section -->
+      <div class="search-section">
+
+        <!-- App Search -->
+        <div class="search-card">
+          <h3>Search Apps</h3>
+          <div class="search-input-wrap">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="app-search-input" placeholder="Search by app name…" autocomplete="off" />
+          </div>
+          <div class="search-results" id="app-search-results">
+            <p class="search-placeholder">Type an app name to search.</p>
+          </div>
+        </div>
+
+        <!-- Group Search -->
+        <div class="search-card">
+          <h3>Search by Group</h3>
+          <select id="group-search-select">
+            <option value="">-- Select a group --</option>
+          </select>
+          <div class="search-results" id="group-search-results" style="margin-top:12px">
+            <p class="search-placeholder">Select a group to see its apps.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>
