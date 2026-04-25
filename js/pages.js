@@ -50,27 +50,70 @@ export function navigateTo(page, id = null) {
   }
 }
 
-function renderPage(page, id) {
+function renderPage(page, idOrFilter) {
   const { apps, allGroups } = getData();
-  if (page === "apps")         renderAppsPage(apps);
-  if (page === "groups")       renderGroupsPage(apps, allGroups);
-  if (page === "app-detail")   renderAppDetail(id, apps);
-  if (page === "group-detail") renderGroupDetail(id, apps, allGroups);
+  if (page === "apps")         renderAppsPage(apps, idOrFilter);
+  if (page === "groups")       renderGroupsPage(apps, allGroups, idOrFilter);
+  if (page === "app-detail")   renderAppDetail(idOrFilter, apps);
+  if (page === "group-detail") renderGroupDetail(idOrFilter, apps, allGroups);
   if (page === "hygiene")      loadHygienePage(); // async, self-managing
 }
 
 // ── All Apps Page ─────────────────────────────────────────
 
-function renderAppsPage(apps) {
-  const container = document.getElementById("page-apps-content");
+const APP_FILTERS = [
+  { id: "all",         label: "All" },
+  { id: "assigned",    label: "Assigned" },
+  { id: "unassigned",  label: "Unassigned" },
+  { id: "all-users",   label: "All Users" },
+  { id: "all-devices", label: "All Devices" },
+];
+
+function applyAppFilter(apps, filter) {
+  switch (filter) {
+    case "assigned":    return apps.filter((a) => a.isAssigned);
+    case "unassigned":  return apps.filter((a) => !a.isAssigned);
+    case "all-users":   return apps.filter((a) => a.assignments.some((x) => x.groupId === "ALL_USERS"));
+    case "all-devices": return apps.filter((a) => a.assignments.some((x) => x.groupId === "ALL_DEVICES"));
+    default:            return apps;
+  }
+}
+
+function renderAppsPage(apps, initialFilter = "all") {
+  const container   = document.getElementById("page-apps-content");
   const searchInput = document.getElementById("page-apps-search");
+  const pillsWrap   = document.getElementById("page-apps-filters");
   searchInput.value = "";
+
+  let activeFilter = APP_FILTERS.find((f) => f.id === initialFilter) ? initialFilter : "all";
+
+  // Build filter pill counts
+  const counts = Object.fromEntries(
+    APP_FILTERS.map((f) => [f.id, applyAppFilter(apps, f.id).length])
+  );
+
+  const renderPills = () => {
+    pillsWrap.innerHTML = APP_FILTERS.map((f) => `
+      <button class="filter-pill ${f.id === activeFilter ? "active" : ""}" data-filter="${f.id}">
+        ${escapeHtml(f.label)}
+        <span class="filter-pill-count">${counts[f.id]}</span>
+      </button>`).join("");
+
+    pillsWrap.querySelectorAll(".filter-pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.filter;
+        renderPills();
+        render(searchInput.value.trim());
+      });
+    });
+  };
 
   const render = (query) => {
     const q = query.toLowerCase();
-    const filtered = q ? apps.filter((a) => a.appName.toLowerCase().includes(q)) : apps;
+    let filtered = applyAppFilter(apps, activeFilter);
+    if (q) filtered = filtered.filter((a) => a.appName.toLowerCase().includes(q));
     if (!filtered.length) {
-      container.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No apps match "${escapeHtml(query)}"</td></tr>`;
+      container.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">No apps match the current filter.</td></tr>`;
       return;
     }
     container.innerHTML = filtered.map((app) => appRow(app)).join("");
@@ -78,12 +121,13 @@ function renderAppsPage(apps) {
 
   // Event delegation for row clicks
   container.onclick = (e) => {
-    if (e.target.closest("a")) return; // don't intercept "Open in Intune" link
+    if (e.target.closest("a")) return;
     const row = e.target.closest("tr[data-app-id]");
     if (row) navigateTo("app-detail", row.dataset.appId);
   };
 
   searchInput.addEventListener("input", (e) => render(e.target.value.trim()));
+  renderPills();
   render("");
 }
 
@@ -161,18 +205,55 @@ function renderAppDetail(appId, apps) {
 
 // ── All Groups Page ───────────────────────────────────────
 
-function renderGroupsPage(apps, allGroups) {
-  const container = document.getElementById("page-groups-content");
+const GROUP_FILTERS = [
+  { id: "all",        label: "All" },
+  { id: "assigned",   label: "Assigned" },
+  { id: "unassigned", label: "Unassigned" },
+];
+
+function applyGroupFilter(groups, filter) {
+  switch (filter) {
+    case "assigned":   return groups.filter((g) => g.total > 0);
+    case "unassigned": return groups.filter((g) => g.total === 0);
+    default:           return groups;
+  }
+}
+
+function renderGroupsPage(apps, allGroups, initialFilter = "all") {
+  const container   = document.getElementById("page-groups-content");
   const searchInput = document.getElementById("page-groups-search");
+  const pillsWrap   = document.getElementById("page-groups-filters");
   searchInput.value = "";
 
   const groupStats = buildGroupStats(apps, allGroups);
+  let activeFilter = GROUP_FILTERS.find((f) => f.id === initialFilter) ? initialFilter : "all";
+
+  const counts = Object.fromEntries(
+    GROUP_FILTERS.map((f) => [f.id, applyGroupFilter(groupStats, f.id).length])
+  );
+
+  const renderPills = () => {
+    pillsWrap.innerHTML = GROUP_FILTERS.map((f) => `
+      <button class="filter-pill ${f.id === activeFilter ? "active" : ""}" data-filter="${f.id}">
+        ${escapeHtml(f.label)}
+        <span class="filter-pill-count">${counts[f.id]}</span>
+      </button>`).join("");
+
+    pillsWrap.querySelectorAll(".filter-pill").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeFilter = btn.dataset.filter;
+        renderPills();
+        render(searchInput.value.trim());
+      });
+    });
+  };
 
   const render = (query) => {
     const q = query.toLowerCase();
-    const filtered = q ? groupStats.filter((g) => g.name.toLowerCase().includes(q)) : groupStats;
+    let filtered = applyGroupFilter(groupStats, activeFilter);
+    if (q) filtered = filtered.filter((g) => g.name.toLowerCase().includes(q));
     if (!filtered.length) {
-      container.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">No groups match "${escapeHtml(query)}"</td></tr>`;
+      container.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">No groups match the current filter.</td></tr>`;
       return;
     }
     container.innerHTML = filtered.map(groupRow).join("");
@@ -186,6 +267,7 @@ function renderGroupsPage(apps, allGroups) {
   };
 
   searchInput.addEventListener("input", (e) => render(e.target.value.trim()));
+  renderPills();
   render("");
 }
 

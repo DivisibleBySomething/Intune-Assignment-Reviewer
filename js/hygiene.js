@@ -24,12 +24,22 @@ export async function loadHygienePage() {
     return;
   }
 
+  const { apps, allGroups } = getData();
+
+  // Warn before starting if the tenant is large
+  if (allGroups.length > 250) {
+    const proceed = await showLargeTenantWarning(allGroups.length);
+    if (!proceed) {
+      showCancelled();
+      return;
+    }
+  }
+
   showLoading();
   _isLoading = true;
 
   try {
     const token = await getToken();
-    const { apps, allGroups } = getData();
     _hygieneData = await buildHygieneData(token, apps, allGroups);
     renderHygiene(_hygieneData);
   } catch (err) {
@@ -37,6 +47,36 @@ export async function loadHygienePage() {
   } finally {
     _isLoading = false;
   }
+}
+
+function showLargeTenantWarning(groupCount) {
+  return new Promise((resolve) => {
+    const modal      = document.getElementById("hygiene-warning-modal");
+    const countEl    = document.getElementById("hygiene-warning-count");
+    const continueBtn = document.getElementById("hygiene-warning-continue");
+    const cancelBtn  = document.getElementById("hygiene-warning-cancel");
+
+    if (countEl) countEl.textContent = groupCount.toLocaleString();
+    modal?.classList.remove("hidden");
+
+    const finish = (result) => {
+      modal?.classList.add("hidden");
+      continueBtn.onclick = null;
+      cancelBtn.onclick   = null;
+      resolve(result);
+    };
+    continueBtn.onclick = () => finish(true);
+    cancelBtn.onclick   = () => finish(false);
+  });
+}
+
+function showCancelled() {
+  const c = getContainer();
+  if (!c) return;
+  c.innerHTML = `
+    <div class="hygiene-cancelled">
+      Analysis cancelled. Click <strong>Hygiene</strong> again whenever you're ready to run it.
+    </div>`;
 }
 
 // ── Internal helpers ──────────────────────────────────────
@@ -199,7 +239,7 @@ async function buildHygieneData(token, apps, allGroups) {
     id: "no-app-groups",
     severity: "low",
     category: "Groups",
-    title: "Groups Not Targeted by Any App",
+    title: "Unassigned Groups (No App Assignments)",
     count: noAppGroups.length,
     total: allGroups.length,
     description:
