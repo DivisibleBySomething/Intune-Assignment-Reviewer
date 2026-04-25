@@ -16,6 +16,7 @@ const CHANGELOG = [
       'Renamed "Empty Groups" to "Unassigned Groups" for clarity',
       "Friendly error dialog for licensing and permission issues instead of raw error text",
       "Large tenant warning shown when hygiene analysis may take a long time (250+ groups)",
+      "Offline export now includes section tabs, filter pills, All Groups table, and What\u2019s New",
     ],
   },
   {
