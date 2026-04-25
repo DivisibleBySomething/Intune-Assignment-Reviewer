@@ -10,6 +10,7 @@ import { initSearch } from "./search.js";
 import { exportDashboard } from "./export.js";
 import { setData } from "./store.js";
 import { initPages } from "./pages.js";
+import { resetHygieneCache } from "./hygiene.js";
 
 const CACHE_KEY = "intune_dashboard_data";
 let chartInstances = {};
@@ -62,7 +63,10 @@ function showErrorBanner(msg) {
 }
 
 export async function loadDashboard(forceRefresh = false) {
-  if (forceRefresh) clearCache();
+  if (forceRefresh) {
+    clearCache();
+    resetHygieneCache();
+  }
 
   setProgress(5, "Checking cache…");
 
