@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Intune Assignment Dashboard</title>
+  <link rel="icon" type="image/x-icon" href="icon.ico" />
   <link rel="stylesheet" href="css/styles.css" />
   <script src="lib/msal-browser.min.js"></script>
   <script src="lib/chart.umd.min.js"></script>
@@ -19,7 +20,7 @@
       <h1>Intune Assignment Dashboard</h1>
       <p>Sign in with your Microsoft 365 account to review Intune mobile app assignments across your tenant.</p>
       <button id="login-btn" class="btn btn-primary">
-        <svg width="20" height="20" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="20" height="20" viewBox="0 0 21 21" fill="none">
           <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
           <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
           <rect x="1" y="11" width="9" height="9" fill="#00A4EF"/>
@@ -27,6 +28,33 @@
         </svg>
         Sign in with Microsoft
       </button>
+
+      <!-- How it works (login) -->
+      <div class="how-section">
+        <button class="how-toggle" id="how-toggle-login" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+          How does this work?
+          <svg class="how-chevron" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="how-body hidden" id="how-body-login">
+          <div class="how-item">
+            <span class="how-icon">🔐</span>
+            <div><strong>Sign in securely</strong><br>Uses Microsoft's own login popup. No passwords or tokens are ever stored by this app.</div>
+          </div>
+          <div class="how-item">
+            <span class="how-icon">📊</span>
+            <div><strong>Reads from Microsoft Graph API</strong><br>Intune app assignments are fetched directly from Microsoft's API using delegated permissions — the app only sees what you have access to.</div>
+          </div>
+          <div class="how-item">
+            <span class="how-icon">🌐</span>
+            <div><strong>Stays in your browser</strong><br>All data is processed locally. Nothing is sent to any external server — this is a fully client-side app.</div>
+          </div>
+          <div class="how-item">
+            <span class="how-icon">⚡</span>
+            <div><strong>Session caching</strong><br>Data is cached in your browser session for speed. Clicking Refresh or signing out clears it completely.</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -41,6 +69,10 @@
       </h1>
       <div class="header-right">
         <div class="user-info" id="user-info"></div>
+        <button id="how-btn" class="btn btn-ghost" title="How this works">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+          How it works
+        </button>
         <button id="refresh-btn" class="btn" title="Refresh data from Graph API">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
           Refresh
@@ -56,74 +88,211 @@
       </div>
     </header>
 
+    <!-- Secondary Nav -->
+    <nav class="secondary-nav">
+      <button class="nav-btn active" data-page="dashboard">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-btn" data-page="apps">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+        All Apps
+      </button>
+      <button class="nav-btn" data-page="groups">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        All Groups
+      </button>
+      <button class="nav-btn" data-page="hygiene">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        Hygiene
+      </button>
+    </nav>
+
     <!-- Progress Bar -->
     <div id="progress-container" class="hidden">
-      <div id="progress-bar-wrap">
-        <div id="progress-bar-fill"></div>
-      </div>
+      <div id="progress-bar-wrap"><div id="progress-bar-fill"></div></div>
       <div id="progress-label">Loading…</div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main Dashboard -->
     <div class="dash-content">
-
-      <!-- Stat Cards -->
-      <div class="stat-cards" id="stat-cards">
-        <!-- Rendered by dashboard.js -->
-      </div>
-
-      <!-- Charts -->
+      <div class="stat-cards" id="stat-cards"></div>
       <div class="charts-row">
-        <div class="chart-card">
-          <h3>Apps by Type</h3>
-          <div class="chart-container">
-            <canvas id="chart-app-types"></canvas>
-          </div>
+        <div class="chart-card"><h3>Apps by Type</h3><div class="chart-container"><canvas id="chart-app-types"></canvas></div></div>
+        <div class="chart-card"><h3>Assignments by Intent</h3><div class="chart-container"><canvas id="chart-intents"></canvas></div></div>
+        <div class="chart-card"><h3>Top 10 Groups by Assignments</h3><div class="chart-container"><canvas id="chart-top-groups"></canvas></div></div>
+      </div>
+      <div class="tabs-section">
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab="app-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+            App Search
+          </button>
+          <button class="tab-btn" data-tab="group-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            Group Search
+          </button>
+          <button class="tab-btn" data-tab="unassigned">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>
+            Unassigned Apps
+          </button>
+          <button class="tab-btn" data-tab="empty-groups">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Empty Groups
+          </button>
         </div>
-        <div class="chart-card">
-          <h3>Assignments by Intent</h3>
-          <div class="chart-container">
-            <canvas id="chart-intents"></canvas>
+        <div class="tab-content">
+          <div id="tab-app-search" class="tab-panel">
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input type="text" id="app-search-input" placeholder="Search by app name…" autocomplete="off" />
+            </div>
+            <div class="search-results" id="app-search-results"><p class="search-placeholder">Type an app name to search.</p></div>
           </div>
-        </div>
-        <div class="chart-card">
-          <h3>Top 10 Groups by Assignments</h3>
-          <div class="chart-container">
-            <canvas id="chart-top-groups"></canvas>
+          <div id="tab-group-search" class="tab-panel hidden">
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input type="text" id="group-search-input" placeholder="Search by group name…" autocomplete="off" />
+            </div>
+            <div class="search-results" id="group-search-results"><p class="search-placeholder">Type a group name to search.</p></div>
+          </div>
+          <div id="tab-unassigned" class="tab-panel hidden">
+            <div class="search-results" id="unassigned-results"></div>
+          </div>
+          <div id="tab-empty-groups" class="tab-panel hidden">
+            <div class="search-input-wrap" style="margin-bottom:12px">
+              <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+              <input type="text" id="empty-groups-search" placeholder="Filter empty groups…" autocomplete="off" />
+            </div>
+            <div class="search-results" id="empty-groups-results"></div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Search Section -->
-      <div class="search-section">
-
-        <!-- App Search -->
-        <div class="search-card">
-          <h3>Search Apps</h3>
-          <div class="search-input-wrap">
+    <!-- All Apps Page -->
+    <div id="page-apps" class="page-view hidden">
+      <div class="page-content">
+        <div class="page-header">
+          <h2>All Apps</h2>
+          <div class="search-input-wrap" style="max-width:320px">
             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-            <input type="text" id="app-search-input" placeholder="Search by app name…" autocomplete="off" />
-          </div>
-          <div class="search-results" id="app-search-results">
-            <p class="search-placeholder">Type an app name to search.</p>
+            <input type="text" id="page-apps-search" placeholder="Filter by app name…" autocomplete="off" />
           </div>
         </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>App</th><th>Status</th><th>Intent</th><th>Groups</th><th>Actions</th></tr></thead>
+            <tbody id="page-apps-content"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-        <!-- Group Search -->
-        <div class="search-card">
-          <h3>Search by Group</h3>
-          <select id="group-search-select">
-            <option value="">-- Select a group --</option>
-          </select>
-          <div class="search-results" id="group-search-results" style="margin-top:12px">
-            <p class="search-placeholder">Select a group to see its apps.</p>
+    <!-- App Detail Page -->
+    <div id="page-app-detail" class="page-view hidden">
+      <div class="page-content">
+        <div class="page-header">
+          <div class="breadcrumb">
+            <button id="app-detail-back" class="btn btn-ghost">← All Apps</button>
+            <span class="breadcrumb-sep">/</span>
+            <span id="app-detail-title" class="breadcrumb-current"></span>
+          </div>
+          <a id="app-detail-open" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+            Open in Intune ↗
+          </a>
+        </div>
+        <div id="app-detail-meta" style="margin-bottom:16px;display:flex;align-items:center;gap:8px"></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Group</th><th>Intent</th><th>Type</th></tr></thead>
+            <tbody id="app-detail-assignments"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Groups Page -->
+    <div id="page-groups" class="page-view hidden">
+      <div class="page-content">
+        <div class="page-header">
+          <h2>All Groups</h2>
+          <div class="search-input-wrap" style="max-width:320px">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="page-groups-search" placeholder="Filter by group name…" autocomplete="off" />
           </div>
         </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>Group</th><th>Apps</th><th>Required</th><th>Available</th><th>Uninstall</th><th>Actions</th></tr></thead>
+            <tbody id="page-groups-content"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
+    <!-- Group Detail Page -->
+    <div id="page-group-detail" class="page-view hidden">
+      <div class="page-content">
+        <div class="page-header">
+          <div class="breadcrumb">
+            <button id="group-detail-back" class="btn btn-ghost">← All Groups</button>
+            <span class="breadcrumb-sep">/</span>
+            <span id="group-detail-title" class="breadcrumb-current"></span>
+          </div>
+          <a id="group-detail-open" href="#" target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+            Open in Portal ↗
+          </a>
+        </div>
+        <div id="group-detail-meta" style="margin-bottom:16px;display:flex;align-items:center;gap:8px"></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>App</th><th>Intent</th><th>Actions</th></tr></thead>
+            <tbody id="group-detail-apps"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hygiene Page -->
+    <div id="page-hygiene" class="page-view hidden">
+      <div class="page-content">
+        <div class="page-header">
+          <h2>Tenant Hygiene</h2>
+          <p style="margin:0;color:var(--text-muted);font-size:13px">Identifies unused and misconfigured objects across your tenant.</p>
+        </div>
+        <div id="hygiene-content"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- How it works modal -->
+  <div id="how-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>How this works</h3>
+        <button id="how-modal-close" class="btn btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="how-item"><span class="how-icon">🔐</span><div><strong>Sign in securely</strong><br>Uses Microsoft's own login popup. No passwords or tokens are ever stored by this app.</div></div>
+        <div class="how-item"><span class="how-icon">📊</span><div><strong>Reads from Microsoft Graph API</strong><br>Intune app assignments are fetched directly from Microsoft's API using delegated permissions — the app only sees what you have access to.</div></div>
+        <div class="how-item"><span class="how-icon">🌐</span><div><strong>Stays in your browser</strong><br>All data is processed locally. Nothing is sent to any external server — this is a fully client-side app.</div></div>
+        <div class="how-item"><span class="how-icon">⚡</span><div><strong>Session caching</strong><br>Data is cached in your browser session for speed. Clicking Refresh or signing out clears it completely.</div></div>
       </div>
     </div>
   </div>
 
   <script type="module" src="js/auth.js"></script>
+  <script>
+    // "How it works" toggle on login page
+    document.getElementById("how-toggle-login").addEventListener("click", function() {
+      const body = document.getElementById("how-body-login");
+      const expanded = this.getAttribute("aria-expanded") === "true";
+      this.setAttribute("aria-expanded", !expanded);
+      body.classList.toggle("hidden", expanded);
+      this.querySelector(".how-chevron").style.transform = expanded ? "" : "rotate(180deg)";
+    });
+  </script>
 </body>
 </html>

@@ -80,7 +80,7 @@ a:hover{text-decoration:underline}
 const EMBEDDED_DATA = ${json};
 
 function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
-function appLink(id,name){return '<a href="https://intune.microsoft.com/#view/Microsoft_Intune_Apps/AppMenuBlade/~/Overview/appId/'+id+'" target="_blank">'+esc(name)+'</a>'}
+function appLink(id,name){return '<a href="https://intune.microsoft.com/#view/Microsoft_Intune_Apps/SettingsMenu/~/0/appId/'+id+'" target="_blank">'+esc(name)+'</a>'}
 function groupLink(id,name){if(id==='ALL_USERS'||id==='ALL_DEVICES')return esc(name);return '<a href="https://intune.microsoft.com/#view/Microsoft_AAD_IAM/GroupDetailsMenuBlade/~/Overview/groupId/'+id+'" target="_blank">'+esc(name)+'</a>'}
 function badge(intent){const cls=intent==='required'?'badge-required':intent==='available'?'badge-available':'badge-uninstall';return '<span class="badge '+cls+'">'+esc(intent)+'</span>'}
 
