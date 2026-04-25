@@ -99,3 +99,51 @@ export async function fetchAllGroups(token) {
     token
   );
 }
+
+export async function fetchConfigProfiles(token) {
+  return graphGetAll(
+    `${GRAPH_BASE}/deviceManagement/deviceConfigurations?$expand=assignments`,
+    token
+  );
+}
+
+export async function fetchCompliancePolicies(token) {
+  return graphGetAll(
+    `${GRAPH_BASE}/deviceManagement/deviceCompliancePolicies?$expand=assignments`,
+    token
+  );
+}
+
+export async function fetchGroupMemberCounts(groupIds, token) {
+  const counts = new Map();
+  if (!groupIds.length) return counts;
+
+  const unique = [...new Set(groupIds)];
+  const chunks = chunkArray(unique, 20);
+
+  for (const chunk of chunks) {
+    const body = {
+      requests: chunk.map((id, i) => ({
+        id: String(i),
+        method: "GET",
+        url: `/groups/${id}/members/$count`,
+        headers: { ConsistencyLevel: "eventual" },
+      })),
+    };
+    try {
+      const result = await graphFetch(`${GRAPH_BASE}/$batch`, token, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      for (const resp of result.responses ?? []) {
+        const originalId = chunk[parseInt(resp.id, 10)];
+        if (originalId) {
+          counts.set(originalId, resp.status === 200 ? Number(resp.body) : -1);
+        }
+      }
+    } catch {
+      for (const id of chunk) counts.set(id, -1);
+    }
+  }
+  return counts;
+}

@@ -1,5 +1,6 @@
 import { getData } from "./store.js";
 import { escapeHtml, renderBadge } from "./search.js";
+import { loadHygienePage } from "./hygiene.js";
 
 const INTUNE_APP_URL = (id) =>
   `https://intune.microsoft.com/#view/Microsoft_Intune_Apps/SettingsMenu/~/0/appId/${id}`;
@@ -29,7 +30,7 @@ export function navigateTo(page, id = null) {
   _currentDetailId = id;
 
   // Update nav active state (only for top-level pages)
-  const topLevel = ["dashboard", "apps", "groups"];
+  const topLevel = ["dashboard", "apps", "groups", "hygiene"];
   if (topLevel.includes(page)) {
     document.querySelectorAll("[data-page]").forEach((b) =>
       b.classList.toggle("active", b.dataset.page === page)
@@ -55,6 +56,7 @@ function renderPage(page, id) {
   if (page === "groups")       renderGroupsPage(apps, allGroups);
   if (page === "app-detail")   renderAppDetail(id, apps);
   if (page === "group-detail") renderGroupDetail(id, apps, allGroups);
+  if (page === "hygiene")      loadHygienePage(); // async, self-managing
 }
 
 // ── All Apps Page ─────────────────────────────────────────

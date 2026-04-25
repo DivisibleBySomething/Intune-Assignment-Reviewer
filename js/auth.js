@@ -14,6 +14,7 @@ const loginRequest = {
   scopes: [
     "User.Read",
     "DeviceManagementApps.Read.All",
+    "DeviceManagementConfiguration.Read.All",
     "Group.Read.All",
     "Directory.Read.All",
   ],
