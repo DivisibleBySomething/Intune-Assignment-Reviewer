@@ -151,7 +151,7 @@ function renderDashboard(apps, allGroups) {
   initChangelog();
 
   document.getElementById("refresh-btn").onclick = () => loadDashboard(true);
-  document.getElementById("export-btn").onclick = () => exportDashboard(apps);
+  document.getElementById("export-btn").onclick = () => exportDashboard(apps, allGroups);
 }
 
 function renderStatCards(apps, allGroups) {
