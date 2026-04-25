@@ -9,8 +9,9 @@ import { normalizeAll, collectRealGroupIds } from "./normalize.js";
 import { initSearch } from "./search.js";
 import { exportDashboard } from "./export.js";
 import { setData } from "./store.js";
-import { initPages } from "./pages.js";
+import { initPages, navigateTo } from "./pages.js";
 import { resetHygieneCache } from "./hygiene.js";
+import { initChangelog } from "./changelog.js";
 
 const CACHE_KEY = "intune_dashboard_data";
 let chartInstances = {};
@@ -47,6 +48,21 @@ function setProgress(pct, label) {
 
 function hideProgress() {
   document.getElementById("progress-container").classList.add("hidden");
+}
+
+function isPermissionError(err) {
+  const m = err?.message ?? "";
+  return m.includes("401") || m.includes("403") || m.includes("Forbidden");
+}
+
+function showPermissionErrorModal() {
+  document.getElementById("permission-error-modal")?.classList.remove("hidden");
+  document.getElementById("permission-error-close")?.addEventListener("click", () => {
+    document.getElementById("permission-error-modal").classList.add("hidden");
+  }, { once: true });
+  document.getElementById("permission-error-modal")?.addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden");
+  }, { once: true });
 }
 
 function showErrorBanner(msg) {
@@ -118,7 +134,11 @@ export async function loadDashboard(forceRefresh = false) {
   } catch (err) {
     hideProgress();
     console.error("Dashboard load failed:", err);
-    showErrorBanner(`Failed to load data: ${err.message}`);
+    if (isPermissionError(err)) {
+      showPermissionErrorModal();
+    } else {
+      showErrorBanner(`Failed to load data: ${err.message}`);
+    }
   }
 }
 
@@ -128,6 +148,7 @@ function renderDashboard(apps, allGroups) {
   renderCharts(apps);
   initSearch(apps, allGroups);
   initPages();
+  initChangelog();
 
   document.getElementById("refresh-btn").onclick = () => loadDashboard(true);
   document.getElementById("export-btn").onclick = () => exportDashboard(apps);
@@ -151,19 +172,19 @@ function renderStatCards(apps, allGroups) {
   const emptyGroups = allGroups.filter((g) => !assignedGroupIds.has(g.id)).length;
 
   const cards = [
-    { label: "Total Apps",        value: totalApps,        cls: "blue",   icon: iconApps() },
-    { label: "Unassigned Apps",   value: unassignedApps,   cls: "red",    icon: iconWarning() },
-    { label: "Total Assignments", value: totalAssignments, cls: "indigo", icon: iconAssignments() },
-    { label: "All Users Apps",    value: allUsersApps,     cls: "teal",   icon: iconUsers() },
-    { label: "All Devices Apps",  value: allDevicesApps,   cls: "orange", icon: iconDevices() },
-    { label: "Empty Groups",      value: emptyGroups,      cls: "red",    icon: iconGroup() },
+    { label: "Total Apps",         value: totalApps,        cls: "blue",   icon: iconApps(),        page: "apps",   filter: "all" },
+    { label: "Unassigned Apps",    value: unassignedApps,   cls: "red",    icon: iconWarning(),     page: "apps",   filter: "unassigned" },
+    { label: "Total Assignments",  value: totalAssignments, cls: "indigo", icon: iconAssignments(), page: "apps",   filter: "assigned" },
+    { label: "All Users Apps",     value: allUsersApps,     cls: "teal",   icon: iconUsers(),       page: "apps",   filter: "all-users" },
+    { label: "All Devices Apps",   value: allDevicesApps,   cls: "orange", icon: iconDevices(),     page: "apps",   filter: "all-devices" },
+    { label: "Unassigned Groups",  value: emptyGroups,      cls: "red",    icon: iconGroup(),       page: "groups", filter: "unassigned" },
   ];
 
   const container = document.getElementById("stat-cards");
   container.innerHTML = cards
     .map(
       (c) => `
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-page="${c.page}" data-filter="${c.filter}" title="View ${c.label}">
       <div class="stat-icon ${c.cls}">${c.icon}</div>
       <div>
         <div class="stat-value">${c.value.toLocaleString()}</div>
@@ -172,6 +193,12 @@ function renderStatCards(apps, allGroups) {
     </div>`
     )
     .join("");
+
+  container.querySelectorAll(".stat-card-clickable").forEach((card) => {
+    card.addEventListener("click", () =>
+      navigateTo(card.dataset.page, card.dataset.filter)
+    );
+  });
 }
 
 function destroyChart(id) {

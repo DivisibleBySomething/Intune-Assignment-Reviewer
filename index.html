@@ -69,6 +69,10 @@
       </h1>
       <div class="header-right">
         <div class="user-info" id="user-info"></div>
+        <button id="whats-new-btn" class="btn btn-ghost" title="What's new">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+          What's New
+        </button>
         <button id="how-btn" class="btn btn-ghost" title="How this works">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
           How it works
@@ -180,6 +184,7 @@
             <input type="text" id="page-apps-search" placeholder="Filter by app name…" autocomplete="off" />
           </div>
         </div>
+        <div id="page-apps-filters" class="filter-pills"></div>
         <div class="table-wrap">
           <table class="data-table">
             <thead><tr><th>App</th><th>Status</th><th>Intent</th><th>Groups</th><th>Actions</th></tr></thead>
@@ -222,6 +227,7 @@
             <input type="text" id="page-groups-search" placeholder="Filter by group name…" autocomplete="off" />
           </div>
         </div>
+        <div id="page-groups-filters" class="filter-pills"></div>
         <div class="table-wrap">
           <table class="data-table">
             <thead><tr><th>Group</th><th>Apps</th><th>Required</th><th>Available</th><th>Uninstall</th><th>Actions</th></tr></thead>
@@ -279,6 +285,52 @@
         <div class="how-item"><span class="how-icon">📊</span><div><strong>Reads from Microsoft Graph API</strong><br>Intune app assignments are fetched directly from Microsoft's API using delegated permissions — the app only sees what you have access to.</div></div>
         <div class="how-item"><span class="how-icon">🌐</span><div><strong>Stays in your browser</strong><br>All data is processed locally. Nothing is sent to any external server — this is a fully client-side app.</div></div>
         <div class="how-item"><span class="how-icon">⚡</span><div><strong>Session caching</strong><br>Data is cached in your browser session for speed. Clicking Refresh or signing out clears it completely.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── What's New / Changelog Modal ── -->
+  <div id="changelog-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header">
+        <h3>✨ What's New</h3>
+        <button id="changelog-close" class="btn btn-ghost">✕</button>
+      </div>
+      <div id="changelog-body" class="modal-body cl-body"></div>
+    </div>
+  </div>
+
+  <!-- ── Permission / Licensing Error Modal ── -->
+  <div id="permission-error-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⚠️ Access Denied</h3>
+        <button id="permission-error-close" class="btn btn-ghost">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 12px;color:var(--text)">The app was unable to load Intune data. This is usually caused by one of the following:</p>
+        <div class="how-item"><span class="how-icon">🔑</span><div><strong>Admin consent not granted</strong><br>A Global Admin in this tenant must approve the app's permissions. <a href="https://login.microsoftonline.com/common/adminconsent?client_id=5f57e333-6cbd-4ba6-b047-facc1079e754" target="_blank" rel="noopener" style="color:var(--primary)">Grant consent now ↗</a></div></div>
+        <div class="how-item" style="margin-top:10px"><span class="how-icon">🪪</span><div><strong>No Intune license assigned</strong><br>The signed-in account must have a Microsoft Intune license (or EMS / M365 BP) assigned in this tenant.</div></div>
+        <div class="how-item" style="margin-top:10px"><span class="how-icon">🏗️</span><div><strong>Intune not set up</strong><br>The tenant may not have completed Intune provisioning. Try opening <a href="https://intune.microsoft.com" target="_blank" rel="noopener" style="color:var(--primary)">intune.microsoft.com ↗</a> directly to confirm.</div></div>
+        <div class="how-item" style="margin-top:10px"><span class="how-icon">👤</span><div><strong>Insufficient role</strong><br>The signed-in user needs at least the <em>Intune Service Administrator</em>, <em>Global Administrator</em>, or <em>Global Reader</em> role in this tenant.</div></div>
+        <p style="margin:16px 0 0;font-size:12px;color:var(--text-muted)">After resolving the issue, sign out and sign back in to get a fresh token.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Hygiene Large-Tenant Warning Modal ── -->
+  <div id="hygiene-warning-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⏳ Large Tenant Detected</h3>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 12px">This tenant has <strong id="hygiene-warning-count">?</strong> groups.</p>
+        <p style="margin:0 0 20px;color:var(--text-muted)">Fetching member counts for all groups requires one API call per group and may take <strong>several minutes or longer</strong> depending on tenant size. The browser tab must remain open throughout.</p>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button id="hygiene-warning-cancel" class="btn">Cancel</button>
+          <button id="hygiene-warning-continue" class="btn btn-primary">Continue Anyway</button>
+        </div>
       </div>
     </div>
   </div>
