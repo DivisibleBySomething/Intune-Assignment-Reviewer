@@ -1259,6 +1259,43 @@ input[type="text"]:focus, select:focus {
 .badge-warning { background: #fff4ce; color: #835b00; }
 .badge-info    { background: #e8f4fd; color: #004578; }
 
+/* ── Export options dialog ── */
+.export-opt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.export-opt-item:last-child { border-bottom: none; }
+.export-opt-item.opt-disabled { opacity: 0.5; }
+.export-opt-item input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+.export-opt-item label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: pointer;
+}
+.export-opt-item label strong { font-size: 14px; }
+.export-opt-item label span   { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.opt-disabled input[type="checkbox"] { cursor: not-allowed; }
+.opt-disabled label { cursor: default; }
+
+/* Primary filled button */
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+
 /* Responsive */
 @media (max-width: 768px) {
   .hygiene-overview { flex-direction: column; align-items: flex-start; }

@@ -2,9 +2,22 @@ import { escapeHtml } from "./search.js";
 
 // Bump this string whenever you ship a new update.
 // Any user whose localStorage doesn't match will see the modal automatically.
-const CURRENT_VERSION = "filter-and-fixes";
+const CURRENT_VERSION = "exports-anonymous";
 
 const CHANGELOG = [
+  {
+    update: "Exports Anonymous",
+    date: "April 2026",
+    emoji: "📥",
+    items: [
+      "Offline export now has three section tabs: Dashboard, All Apps, and All Groups",
+      "Filter pills and search work on both the All Apps and All Groups tabs in the export",
+      "All six stat cards are included and click through to the matching tab and filter",
+      "Optionally include a full Hygiene Analysis tab with score ring and expandable findings",
+      "Export options dialog lets you choose what to include before downloading",
+      "What\u2019s New changelog is available in the export via a button in the header",
+    ],
+  },
   {
     update: "Filter & Fixes",
     date: "April 2026",
@@ -16,7 +29,6 @@ const CHANGELOG = [
       'Renamed "Empty Groups" to "Unassigned Groups" for clarity',
       "Friendly error dialog for licensing and permission issues instead of raw error text",
       "Large tenant warning shown when hygiene analysis may take a long time (250+ groups)",
-      "Offline export now includes section tabs, filter pills, All Groups table, and What\u2019s New",
     ],
   },
   {

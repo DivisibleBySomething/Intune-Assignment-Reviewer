@@ -10,7 +10,7 @@ import { initSearch } from "./search.js";
 import { exportDashboard } from "./export.js";
 import { setData } from "./store.js";
 import { initPages, navigateTo } from "./pages.js";
-import { resetHygieneCache } from "./hygiene.js";
+import { resetHygieneCache, getHygieneCache } from "./hygiene.js";
 import { initChangelog } from "./changelog.js";
 
 const CACHE_KEY = "intune_dashboard_data";
@@ -151,7 +151,7 @@ function renderDashboard(apps, allGroups) {
   initChangelog();
 
   document.getElementById("refresh-btn").onclick = () => loadDashboard(true);
-  document.getElementById("export-btn").onclick = () => exportDashboard(apps, allGroups);
+  document.getElementById("export-btn").onclick = () => exportDashboard(apps, allGroups, getHygieneCache());
 }
 
 function renderStatCards(apps, allGroups) {

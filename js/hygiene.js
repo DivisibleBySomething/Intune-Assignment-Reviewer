@@ -15,6 +15,10 @@ export function resetHygieneCache() {
   _isLoading = false;
 }
 
+export function getHygieneCache() {
+  return _hygieneData;
+}
+
 // Called from pages.js — intentionally not awaited (manages its own loading state)
 export async function loadHygienePage() {
   if (_isLoading) return;
